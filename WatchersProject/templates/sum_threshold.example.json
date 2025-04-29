@@ -1,6 +1,0 @@
-{
-  "index": "watcher-pruebas",
-  "timestamp_field": "@timestamp",
-  "target_field": "duration",
-  "threshold": 10000
-}
