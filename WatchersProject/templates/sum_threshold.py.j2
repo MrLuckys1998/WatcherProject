@@ -1,0 +1,38 @@
+from elasticsearch import Elasticsearch
+from datetime import datetime, timedelta
+from logger import logger
+
+# Watcher: sum_threshold
+
+{% if elastic_user and elastic_pass %}
+es = Elasticsearch("{{ elastic_url }}", basic_auth=({{ elastic_user | tojson }}, {{ elastic_pass | tojson }}))
+{% else %}
+es = Elasticsearch("{{ elastic_url }}")
+{% endif %}
+
+
+def run():
+    now = datetime.utcnow()
+    since = now - timedelta(minutes=30)
+
+    result = es.search(index="{{ index }}", size=0, body={
+        "query": {
+            "range": {
+                "{{ timestamp_field }}": {
+                    "gte": since.isoformat(),
+                    "lt": now.isoformat()
+                }
+            }
+        },
+        "aggs": {
+            "total_sum": {
+                "sum": {
+                    "field": "{{ target_field }}"
+                }
+            }
+        }
+    })
+
+    value = result['aggregations']['total_sum']['value']
+    if value > {{ threshold }}:
+        logger.info(f"ALERTA: SUM({{ target_field }}) = {{ value }} > {{ threshold }}")

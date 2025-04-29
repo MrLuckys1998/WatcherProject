@@ -1,0 +1,13 @@
+{
+    "index": "logs-*",
+    "query": {
+      "query": {
+        "range": {
+          "@timestamp": {
+            "gte": "now-30m"
+          }
+        }
+      }
+    },
+    "condition_script": "if result['hits']['total']['value'] > 0:\n    logger.info('ALERTA: Se encontraron resultados')"
+  }

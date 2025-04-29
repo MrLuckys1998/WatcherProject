@@ -1,0 +1,36 @@
+from elasticsearch import Elasticsearch
+from datetime import datetime, timedelta
+from logger import logger
+
+{% if elastic_user and elastic_pass %}
+es = Elasticsearch("{{ elastic_url }}", basic_auth=({{ elastic_user | tojson }}, {{ elastic_pass | tojson }}))
+{% else %}
+es = Elasticsearch("{{ elastic_url }}")
+{% endif %}
+
+def run():
+    now = datetime.utcnow()
+    since = now - timedelta(minutes=30)
+
+    result = es.search(index="{{ index }}", size=0, body={
+        "query": {
+            "range": {
+                "{{ timestamp_field }}": {
+                    "gte": since.isoformat(),
+                    "lt": now.isoformat()
+                }
+            }
+        },
+        "aggs": {
+            "avg_value": {
+                "avg": {
+                    "field": "{{ target_field }}"
+                }
+            }
+        }
+    })
+
+    avg = result['aggregations']['avg_value']['value']
+    if avg is not None and avg > {{ threshold }}:
+        message = f"ALERTA: Promedio de '{{ target_field }}' = {{ avg }} supera {{ threshold }}"
+        logger.info(message)
