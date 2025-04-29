@@ -1,6 +1,0 @@
-{
-  "index": "watcher-pruebas",
-  "timestamp_field": "@timestamp",
-  "field": "status_code",
-  "value": 404
-}
